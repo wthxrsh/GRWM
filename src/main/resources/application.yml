@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: grwm
+  datasource:
+    url: jdbc:postgresql://${GRWM_DB_HOST:localhost}:${GRWM_DB_PORT:5432}/${GRWM_DB_NAME:grwm_db}
+    username: ${GRWM_DB_USERNAME:postgres}
+    password: ${GRWM_DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+grwm:
+  jwt:
+    secret: ${GRWM_JWT_SECRET:Y2hhbmdlLW1lLXN1cGVyLXNlY3JldC1rZXktZm9yLWdyd20tcHJvamVjdC0yMDI2LWVkaXRpb24=}
+    access-expiration-ms: ${GRWM_JWT_ACCESS_EXPIRATION:900000}
+    refresh-expiration-ms: ${GRWM_JWT_REFRESH_EXPIRATION:604800000}
+  cors:
+    allowed-origins: ${GRWM_CORS_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}
+
+server:
+  port: ${PORT:8080}

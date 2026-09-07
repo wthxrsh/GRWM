@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:18
+    container_name: grwm-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: grwm
+      POSTGRES_PASSWORD: grwm
+      POSTGRES_DB: grwm_db
+    ports:
+      - "${GRWM_DB_HOST_PORT:-5434}:5432"
+    volumes:
+      - grwm-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grwm -d grwm_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: grwm-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      GRWM_DB_HOST: db
+      GRWM_DB_PORT: 5432
+      GRWM_DB_NAME: grwm_db
+      GRWM_DB_USERNAME: grwm
+      GRWM_DB_PASSWORD: grwm
+      GRWM_JWT_SECRET: ${GRWM_JWT_SECRET:-Y2hhbmdlLW1lLXN1cGVyLXNlY3JldC1rZXktZm9yLWdyd20tcHJvamVjdC0yMDI2LWVkaXRpb24=}
+      GRWM_CORS_ORIGINS: ${GRWM_CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}
+    ports:
+      - "${GRWM_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  frontend:
+    build:
+      context: grwm-frontend
+    container_name: grwm-frontend
+    restart: unless-stopped
+    ports:
+      - "${GRWM_FRONTEND_PORT:-5173}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  grwm-db-data:

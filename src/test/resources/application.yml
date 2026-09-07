@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:grwm-test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+grwm:
+  jwt:
+    secret: test-only-secret-key-that-is-long-enough-for-hs256-signing-2026
+    access-expiration-ms: 900000
+    refresh-expiration-ms: 604800000
+  cors:
+    allowed-origins: http://localhost:5173

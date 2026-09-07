@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Frontend ###
+grwm-frontend/node_modules/
+grwm-frontend/dist/
+npm-debug.log*
