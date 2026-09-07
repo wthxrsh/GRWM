@@ -24,6 +24,7 @@ GRWM is a full-stack web application that tells you what to wear today. It geoco
 - [API Documentation](#api-documentation)
 - [Project Structure](#project-structure)
 - [Testing](#testing)
+- [Performance & Metrics](#performance--metrics)
 - [Technical Decisions](#technical-decisions)
 - [Security & Error Handling](#security--error-handling)
 - [Future Improvements](#future-improvements)
@@ -439,6 +440,58 @@ Covered scenarios (the suite currently has **7 tests**):
 - Wrong password → `401` · duplicate username → `409` · invalid payload → `400` with `fieldErrors`
 
 **Frontend:** no test runner is configured yet (`package.json` has dev/build/preview scripts only). Adding Vitest + React Testing Library is a planned improvement.
+
+**Coverage** — JaCoCo is wired into the Maven build: `./mvnw test` produces an HTML report at `target/site/jacoco/index.html`. The current suite measures **65.2% instruction** and **64.8% line** coverage across 33 classes (branch coverage is lower at 38.4%, because parts of the style-engine decision tree are not yet exercised). See [Performance & Metrics](#performance--metrics) for the full numbers.
+
+## Performance & Metrics
+
+Numbers below were measured on a local run of this repository (Docker Compose stack with PostgreSQL 18, a Node.js load client at concurrency 25, 500 requests per endpoint). Report them as one data point on a development machine, not a formal benchmark.
+
+### Test suite
+
+| Metric | Value |
+|--------|-------|
+| Integration tests | **7 / 7 passing** · 0 failures · 0 errors |
+| Test runtime (`./mvnw clean test`) | ~25 s |
+| Code coverage (JaCoCo) | 65.2% instructions · 64.8% lines · 38.4% branches (33 classes) |
+
+### API latency & throughput
+
+| Endpoint | Throughput | p50 | p95 | p99 |
+|----------|-----------|-----|-----|-----|
+| `POST /auth/login` (BCrypt + JWT issue) | 71.5 req/s | 344 ms | 513 ms | 622 ms |
+| `GET /users/profile` (JWT verify + DB read) | 694.6 req/s | 34.5 ms | 54.5 ms | 76.7 ms |
+| `GET /recommendations/history` (JWT + DB read) | 795.9 req/s | 29.4 ms | 50.3 ms | 66.1 ms |
+
+`POST /recommendations/suggest` is bounded by its upstream provider calls (Open-Meteo / BigDataCloud; ~350–500 ms typical; the first call after a cold start can exceed 1 s). The table above isolates the application's own request cost.
+
+### Build & bundle
+
+| Metric | Value |
+|--------|-------|
+| Backend build with tests (`./mvnw clean test`) | ~25 s |
+| Backend build, tests skipped (`./mvnw clean package -DskipTests`) | 6.4 s |
+| Frontend build (`npm run build`) | ~1.1 s · 42 modules |
+| Frontend JS bundle | 233.7 kB raw · 73.5 kB gzip |
+| Frontend CSS bundle | 12.9 kB raw · 3.4 kB gzip |
+| Runnable backend JAR | 63 MB |
+
+### Containers
+
+| Image | Size |
+|-------|------|
+| `grwm-backend` (Temurin 25 JRE + app) | 597 MB |
+| `grwm-frontend` (nginx + built SPA) | 102 MB |
+| `postgres:18` (base image) | 650 MB |
+
+### Codebase size
+
+| Part | LOC |
+|------|-----|
+| Java (main) | 1,370 |
+| Java (tests) | 212 |
+| JS/JSX (frontend) | 826 |
+| CSS | 962 |
 
 ## Technical Decisions
 
